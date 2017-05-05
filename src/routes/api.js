@@ -20,21 +20,20 @@ module.exports = function(router) {
   })
 
   router.get('/lessons/:lesson_id/posts', (req, res) => {
-    console.log(req.params.lesson_id);
-    pool.query(`SELECT * FROM posts p INNER JOIN lessons l
-                ON p.lesson_id = l.id
+    pool.query(`SELECT * FROM posts p
                 WHERE ${req.params.lesson_id} = p.lesson_id`, (err, posts) => {
       if(err) return res.status(500).send();
-      pool.query(`SELECT * FROM tags t INNER JOIN posttags pt
-                  ON pt.tag_id = t.id`, (err, tags) => {
-                  console.log(tags);
+      console.log(posts.rows);
+      pool.query(`SELECT t.tag, pt.post_id FROM tags t INNER JOIN posttags pt
+                  ON t.id = pt.tag_id`, (err, tags) => {
         const response = posts.rows.map(post => {
+          console.log(tags.rows)
           return {
             title: post.title,
             votes: post.votes,
             id: post.id,
             description: post.description,
-            tags: tags.rows.filter(tag => tag.id === week.id)
+            tags: tags.rows.filter(tag => tag.post_id === post.id)
           }
         });
         res.status(200).send(response);
