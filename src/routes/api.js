@@ -1,23 +1,39 @@
 const path = require('path');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
+
 import { pool } from '../app';
 
 module.exports = function(router) {
 
   router.get('/weeks', (req, res) => {
-    pool.query('SELECT * FROM weeks', (err, weeks) => {
-      if(err) return res.status(500).send();
-      pool.query('SELECT * FROM lessons', (err, lessons) => {
-        const response = weeks.rows.map(week => {
-          return {
-            title: week.title,
-            lessons: lessons.rows.filter(lesson => lesson.week_id === week.id)
-          }
+    if(!req.cookies.redit_session) {
+      return res.status(403).send();
+    }
+    const session = jwt.decode(req.cookies.redit_session);
+    console.log(session);
+
+    pool.query(`SELECT * FROM users WHERE username='${session.user_email}';`).then((user) => {
+      console.log(user.rows);
+      if(user && user.rows.length){
+        pool.query('SELECT * FROM weeks', (err, weeks) => {
+          if(err) return res.status(500).send();
+          pool.query('SELECT * FROM lessons', (err, lessons) => {
+            const response = weeks.rows.map(week => {
+              return {
+                title: week.title,
+                lessons: lessons.rows.filter(lesson => lesson.week_id === week.id)
+              }
+            });
+            res.status(200).send(response);
+          });
         });
-        res.status(200).send(response);
-      });
+      }else {
+        console.log('ohhh noooo')
+        return res.status(403).send();
+      }
     });
-  })
+  });
 
   router.get('/lessons/:lesson_id/posts', (req, res) => {
     pool.query(`SELECT * FROM posts p

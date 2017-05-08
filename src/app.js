@@ -1,12 +1,14 @@
 import express from 'express';
 const json = require('body-parser').json;
+
 import { resolve } from 'path';
 import pg from 'pg';
 const Pool = require('pg-pool');
+const cookieParser = require('cookie-parser');
 
 import fallback from 'express-history-api-fallback';
 
-import config from '../config'
+import config from '../config';
 
 const apiRouter = new express.Router();
 const authRouter = new express.Router();
@@ -28,10 +30,11 @@ const configuration = {
 export const pool = new Pool(configuration);
 
 app.use(json());
+app.use(cookieParser())
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
   next();
 });
 
